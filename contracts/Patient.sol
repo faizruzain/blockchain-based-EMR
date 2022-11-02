@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.17;
 
+import "./Doctor.sol";
+
 contract Patient {
     struct PatientData {
         string nama_lengkap;
@@ -17,12 +19,25 @@ contract Patient {
     address private doctor;
     address private patient;
 
+    // SCDoctor.sol
+    // SCDoctor.sol address
+    address private scdoctorAddress;
+
     //address private lastAccess;
 
     constructor(address _doctor, address _patient) {
         admin = msg.sender;
         doctor = _doctor;
         patient = _patient;
+    }
+
+    function setDoctorAddress(address _doctorAddress) public {
+        scdoctorAddress = _doctorAddress;
+    }
+
+    function sendThisToDoctor() onlyDoctor public {
+        Doctor scdoctor = Doctor(scdoctorAddress);
+        scdoctor.addPatient(address(this));
     }
 
     function setPatientData(
@@ -79,10 +94,6 @@ contract Patient {
         Patient_Data = newData;
     }
 
-    // function getLastAccess() public view returns(address) {
-    //     return lastAccess;
-    // }
-
     modifier onlyDoctor() {
         require(msg.sender == doctor);
         _;
@@ -92,6 +103,10 @@ contract Patient {
         require(msg.sender == doctor || msg.sender == patient);
         _;
     }
+
+
+
+
 }
 
 // "Aghna Faiz Ruzain", 25, "18-06-1997", "01-01-2022 0:14:25", " ", "anamnesis", "diagnosis"
