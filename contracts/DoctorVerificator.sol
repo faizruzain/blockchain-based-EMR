@@ -23,7 +23,7 @@ contract DoctorVerificator {
         
     }
 
-    function verify(address _address) public view returns(bool _bool) {
+    function verify(address _address) external view returns(bool _bool) {
         if(doctor[_address]) {
             return true;
         } else {

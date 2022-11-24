@@ -5,47 +5,49 @@ contract Doctor {
 
     struct  DoctorDetails {
         address accountAddress; //use this as doctor ID
-        address contractAddress;
         string fullName;
         string department;
+        address[] patientLists;
 
     }
 
     address private admin;
-    address[] private listOfpatients;
-    address private doctor;
-    DoctorDetails doctor_details;
+    mapping(address => DoctorDetails) private doctor_details;
 
-    constructor(address _doctor) {
+    constructor() {
         admin = msg.sender;
-        doctor = _doctor;
     }
 
-    function setDoctor(string memory _fullName, string memory _department) public {
-        DoctorDetails memory newDoctor = DoctorDetails({
-            accountAddress: doctor,
-            contractAddress: address(this),
-            fullName: _fullName,
-            department: _department
-        });
+    function setDoctorDetails(
+        address _accountAddress,
+        string memory _fullName,
+        string memory _department
 
-        doctor_details = newDoctor;
+        ) public {
+        DoctorDetails storage newDoctorDetails = doctor_details[_accountAddress];
+        newDoctorDetails.accountAddress = _accountAddress;
+        newDoctorDetails.fullName = _fullName;
+        newDoctorDetails.department = _department;
     }
 
-    function addPatient(address _patientAddress) external {
-        listOfpatients.push(_patientAddress);
+    function getDoctorDetails(address _address) public view returns(DoctorDetails memory) {
+        return doctor_details[_address];
     }
 
-    function listPatients() onlyDoctor public view returns(address[] memory _patients) {
-        return listOfpatients;
+    function addPatientToThis(address _address, address _patientAddress) public {
+        DoctorDetails storage doctorDetails = doctor_details[_address];
+        doctorDetails.patientLists.push(_patientAddress);
     }
 
-    modifier onlyDoctor() {
-        require(msg.sender == doctor);
-        _;
+    function getThisPatientsLists(address _doctorAddress) public view returns(address[] memory _address) {
+        DoctorDetails storage result = doctor_details[_doctorAddress];
+        return result.patientLists;
     }
+
+
+
+    
     
 }
-// edited with vim :)
 
-// doctor 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
+// 0x583031D1113aD414F02576BD6afaBfb302140225, "Dr. Puja Hadi Prabowski", "Penjaringan"

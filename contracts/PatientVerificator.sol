@@ -12,7 +12,7 @@ contract PatientVerificator {
         admin = msg.sender;
     }
 
-    function addPatient(address _address) onlyAdmin public returns(string memory notif) {
+    function addPatient(address _address) public returns(string memory notif) {
         if(!patient[_address]) {
             patient[_address] = true;
             patients.push(_address);
