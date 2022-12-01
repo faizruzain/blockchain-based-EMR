@@ -2,24 +2,34 @@
 pragma solidity >=0.8.17;
 
 contract ContractDeployer {
-    address[] private contractAddress;
-
-    constructor() {
-        address patientContract = address(new Patient(msg.sender));
-        contractAddress.push(patientContract);
-
-        address patientVerificator = address(new PatientVerificator(msg.sender));
-        contractAddress.push(patientVerificator);
-
-        address doctorVerificator = address(new DoctorVerificator(msg.sender));
-        contractAddress.push(doctorVerificator);
-
-        address doctorRelation = address(new DoctorRelation(msg.sender));
-        contractAddress.push(doctorRelation);
+    struct ContractAddress {
+        string name;
+        address contractAddress;
     }
 
-    function getAllContractAddress() public view returns(address[] memory _address) {
-        return contractAddress;
+    mapping(string => ContractAddress[]) private bunchOfContractAddress;
+    address public admin;
+
+    constructor() {
+        admin = msg.sender;
+
+        address patient = address(new Patient(msg.sender));
+        bunchOfContractAddress["pantek"].push(ContractAddress("patient", patient));
+
+        address patientVerificator = address(new PatientVerificator(msg.sender));
+        bunchOfContractAddress["pantek"].push(ContractAddress("patientVerificator", patientVerificator));
+
+        address doctorVerificator = address(new DoctorVerificator(msg.sender));
+        bunchOfContractAddress["pantek"].push(ContractAddress("doctorVerificator", doctorVerificator));
+
+        address doctorRelation = address(new DoctorRelation(msg.sender));
+        bunchOfContractAddress["pantek"].push(ContractAddress("doctorRelation", doctorRelation));
+
+    }
+
+    function getAllContractAddress(string memory _name) public view returns (ContractAddress[] memory data) {
+        require(msg.sender == admin);
+        return bunchOfContractAddress[_name];
     }
 }
 
