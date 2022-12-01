@@ -8,30 +8,41 @@ const path = require("path");
 // The fs module enables interacting with the file system in a way modeled on standard POSIX functions.
 const fs = require("fs");
 
-const Patient_path = path.resolve(__dirname, "contracts", "Patient.sol");
+const fse = require("fs-extra");
 
-const content = fs.readFileSync(Patient_path, "utf8");
+const buildPath = path.resolve(__dirname, "build");
+
+fse.removeSync(buildPath);
+
+const contracts_path = path.resolve(__dirname, "contracts", "ElectronicMedicalRecords.sol");
+
+const content = fs.readFileSync(contracts_path, "utf8");
 
 var input = {
   language: "Solidity",
   sources: {
-    "Patient.sol": {
+    "ElectronicMedicalRecords.sol": {
       content: content,
     },
   },
   settings: {
     outputSelection: {
-      "Patient.sol": {
+      "*": {
         "*": ["*"],
       },
     },
   },
 };
 
-const output = JSON.parse(solc.compile(JSON.stringify(input))).contracts[
-  "Patient.sol"
-].Patient;
+var output = JSON.parse(solc.compile(JSON.stringify(input)));
 
-// console.log(output);
+fse.ensureDirSync(buildPath);
 
-module.exports = output;
+for (let contractName in output.contracts["ElectronicMedicalRecords.sol"]) {
+  fse.outputJSONSync(
+    path.resolve(buildPath, `${contractName}.json`),
+    output.contracts["ElectronicMedicalRecords.sol"][contractName]
+  );
+}
+
+console.log(output);
