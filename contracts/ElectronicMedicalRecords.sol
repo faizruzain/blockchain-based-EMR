@@ -35,6 +35,7 @@ contract ContractDeployer {
 
 contract Patient {
     struct PatientData {
+        address patientAddress;
         string nama_lengkap;
         uint256 umur;
         string tanggal_lahir;
@@ -76,8 +77,9 @@ contract Patient {
         string memory _anamnesis,
         string memory _diagnosis
 
-    ) public onlyDoctor { //onlyDoctor
+    ) public onlyDoctor { 
         PatientData storage newPatientData = Patient_Data[_patient];
+        newPatientData.patientAddress = _patient;
         newPatientData.nama_lengkap = _nama_lengkap;
         newPatientData.umur = _umur;
         newPatientData.tanggal_lahir = _tanggal_lahir;
@@ -110,7 +112,7 @@ contract Patient {
         string memory _anamnesis,
         string memory _diagnosis
 
-    ) public { //onlyDoctor
+    ) public { 
         PatientData storage existingPatientData = Patient_Data[_patient];
         existingPatientData.nama_lengkap = _nama_lengkap;
         existingPatientData.umur = _umur;
@@ -144,14 +146,10 @@ contract PatientVerificator {
         admin = _admin;
     }
 
-    function addPatient(address _address) public returns(string memory notif) {
-        if(!patient[_address]) {
-            patient[_address] = true;
-            patients.push(_address);
-            return "Address added";
-        } else {
-            return "Cannot add same address";
-        }
+    function addPatient(address _address) onlyAdmin public {
+        require(!patient[_address]);      
+        patient[_address] = true;
+        patients.push(_address);
         
     }
 
@@ -185,14 +183,10 @@ contract DoctorVerificator {
         admin = _admin;
     }
 
-    function addDoctor(address _address) onlyAdmin public returns(string memory notif) {
-        if(!doctor[_address]) {
-            doctor[_address] = true;
-            doctors.push(_address);
-            return "Address added";
-        } else {
-            return "Cannot add same address";
-        }
+    function addDoctor(address _address) onlyAdmin public {
+        require(!doctor[_address]);      
+        doctor[_address] = true;
+        doctors.push(_address);
         
     }
 
@@ -217,19 +211,30 @@ contract DoctorVerificator {
 
 contract DoctorRelation {
     address admin;
-    mapping(address => bool) private haveAccess;
     mapping(address => address[]) private relatedPatien;
+
+    DoctorVerificator doctor_verificator;
 
     constructor(address _admin) {
         admin = _admin;
     }
 
-    function addDoctorRelation(address _doctor, address _patient) public {
+    function setDoctorVerificatorAddress(address _DoctorVerificatorAddress) public {
+        require(msg.sender == admin);
+        doctor_verificator = DoctorVerificator(_DoctorVerificatorAddress);
+    }
+
+    function addDoctorRelation(address _doctor, address _patient) public onlyDoctor (msg.sender) {
         relatedPatien[_doctor].push(_patient);
     }
 
-    function getDoctorRelations(address _doctor) public view returns(address[] memory) {
+    function getDoctorRelations(address _doctor) public view onlyDoctor(msg.sender) returns(address[] memory) {
         return relatedPatien[_doctor];
+    }
+
+    modifier onlyDoctor(address _doctor) {
+        require(doctor_verificator.verify(_doctor));
+        _;
     }
 
 
