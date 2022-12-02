@@ -14,16 +14,16 @@ contract ContractDeployer {
         admin = msg.sender;
 
         address patient = address(new Patient(msg.sender));
-        bunchOfContractAddress["pantek"].push(ContractAddress("patient", patient));
+        bunchOfContractAddress["secret"].push(ContractAddress("patient", patient));
 
         address patientVerificator = address(new PatientVerificator(msg.sender));
-        bunchOfContractAddress["pantek"].push(ContractAddress("patientVerificator", patientVerificator));
+        bunchOfContractAddress["secret"].push(ContractAddress("patientVerificator", patientVerificator));
 
         address doctorVerificator = address(new DoctorVerificator(msg.sender));
-        bunchOfContractAddress["pantek"].push(ContractAddress("doctorVerificator", doctorVerificator));
+        bunchOfContractAddress["secret"].push(ContractAddress("doctorVerificator", doctorVerificator));
 
         address doctorRelation = address(new DoctorRelation(msg.sender));
-        bunchOfContractAddress["pantek"].push(ContractAddress("doctorRelation", doctorRelation));
+        bunchOfContractAddress["secret"].push(ContractAddress("doctorRelation", doctorRelation));
 
     }
 
