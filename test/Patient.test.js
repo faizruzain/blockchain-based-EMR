@@ -4,10 +4,23 @@ const { before, after } = require("mocha");
 const Web3 = require("web3");
 const web3 = new Web3(ganache.provider());
 
-const { abi, evm } = require("../compile");
+// const { abi, evm } = require("../compile");
 
+const compiled_ContractDeployer = require("../build/ContractDeployer.json");
+const compiled_DoctorVerificator = require("../build/DoctorVerificator.json");
+
+// an array of accounts
 let accounts;
-let Patient;
+
+// contracts instance
+let ContractDeployer;
+let DoctorVerificator;
+
+// addresses
+let patient;
+let patientVerificator;
+let doctorVerificator;
+let doctorRelation;
 
 let d = new Date();
 let date = d.toLocaleDateString("id-ID", {
@@ -17,97 +30,172 @@ let time = d.toLocaleTimeString("id-ID", {
   timeStyle: "long",
 });
 
-//console.log(`${date} ${time}`);
+// //console.log(`${date} ${time}`);
 
-describe("Patient", async () => {
+describe("ContractDeployer", async () => {
   before(async () => {
-    accounts = await web3.eth.getAccounts();
-    Patient = await new web3.eth.Contract(abi)
-      .deploy({
-        data: evm.bytecode.object,
-        arguments: [accounts[1], accounts[2]],
-      })
-      .send({
-        from: accounts[0], //admin
-        gas: "1000000",
-      });
+    try {
+      accounts = await web3.eth.getAccounts();
+      ContractDeployer = await new web3.eth.Contract(
+        compiled_ContractDeployer.abi
+      )
+        .deploy({
+          data: compiled_ContractDeployer.evm.bytecode.object,
+        })
+        .send({
+          from: accounts[0], //admin
+          gas: "3000000",
+        });
+    } catch (err) {
+      console.log(err);
+    }
   });
 
-  after(async () => {
-    const rawData = await Patient.methods.getPatientData().call({
-      from: accounts[1],
-      gas: "1000000",
+  // after(async () => {
+  //   const rawData = await Patient.methods.getPatientData().call({
+  //     from: accounts[1],
+  //     gas: "1000000",
+  //   });
+
+  //   const newData = {};
+  //   for (const key in rawData) {
+  //     if (key.length > 1) {
+  //       newData[key] = rawData[key];
+  //     }
+  //   }
+  //   console.log(newData);
+  //   assert.ok(rawData);
+  // });
+
+  it("Deploys a Contract called ContractDepoyer", () => {
+    assert.ok(ContractDeployer.options.address);
+  });
+
+  it("Returns address of deployed contract", async () => {
+    try {
+      const res = await ContractDeployer.methods
+        .getAllContractAddress("pantek")
+        .call({
+          from: accounts[0],
+        });
+      [
+        { contractAddress: patient },
+        { contractAddress: patientVerificator },
+        { contractAddress: doctorVerificator },
+        { contractAddress: doctorRelation },
+      ] = res;
+      assert.equal(res.length, 4);
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  describe("DoctorVerificator", async () => {
+    before(async () => {
+      try {
+        DoctorVerificator = await new web3.eth.Contract(
+          compiled_DoctorVerificator.abi,
+          doctorVerificator
+        );
+      } catch (err) {
+        console.log(err);
+      }
     });
 
-    const newData = {};
-    for (const key in rawData) {
-      if (key.length > 1) {
-        newData[key] = rawData[key];
+    it("Adds doctor to list", async () => {
+      try {
+        const res = await DoctorVerificator.methods
+          .addDoctor(accounts[1])
+          .send({
+            from: accounts[0],
+            gas: "1000000",
+          });
+        console.log(res);
+      } catch (err) {
+        console.log(err);
       }
-    }
-    console.log(newData);
-    assert.ok(rawData);
-  });
-
-  it("Deploys a Contract called Patient", () => {
-    assert.ok(Patient.options.address);
-  });
-
-  it("Set patient data", async () => {
-    await Patient.methods
-      .setPatientData(
-        "Aghna Faiz Ruzain",
-        25,
-        "18-06-1997",
-        `${date} ${time}`,
-        "",
-        "anamnesis",
-        "diagnosis"
-      )
-      .send({
-        from: accounts[1],
-        gas: "1000000",
-      })
-      .on("transactionHash", (hash) => {
-        assert.ok(hash);
-      });
-  });
-
-  it("Get patient data", async () => {
-    const rawData = await Patient.methods.getPatientData().call({
-      from: accounts[1],
-      gas: "1000000",
     });
 
-    const newData = {};
-    for (const key in rawData) {
-      if (key.length > 1) {
-        newData[key] = rawData[key];
+    it("Verifies doctor", async () => {
+      try {
+        const res = await DoctorVerificator.methods.verify(accounts[1]).call();
+        console.log(res);
+      } catch (err) {
+        console.log(err);
       }
-    }
-    console.log(newData);
-    assert.ok(rawData);
+    });
+
+    it("Cannot add duplicated doctor to list", async () => {
+      try {
+        const res = await DoctorVerificator.methods
+          .addDoctor(accounts[1])
+          .send({
+            from: accounts[0],
+            gas: "1000000",
+          });
+        console.log(res);
+        // assert.equal(res, false)
+      } catch (err) {
+        console.log(err);
+      }
+    });
   });
 
-  it("Update patient data", async () => {
-    await Patient.methods
-      .updatePatientData(
-        "Aghna Faiz Ruzain",
-        25,
-        "18-06-1997",
-        "31 Oktober 2022 01.52.26 WIB",
-        `${date} ${time}`,
-        "anamnesis",
-        "diagnosis"
-      )
-      .send({
-        from: accounts[1],
-        gas: "1000000",
-      })
-      .on("transactionHash", (hash) => {
-        assert.ok(hash);
-      });
-  });
+  // it("Set patient data", async () => {
+  //   await Patient.methods
+  //     .setPatientData(
+  //       "Aghna Faiz Ruzain",
+  //       25,
+  //       "18-06-1997",
+  //       `${date} ${time}`,
+  //       "",
+  //       "anamnesis",
+  //       "diagnosis"
+  //     )
+  //     .send({
+  //       from: accounts[1],
+  //       gas: "1000000",
+  //     })
+  //     .on("transactionHash", (hash) => {
+  //       assert.ok(hash);
+  //     });
+  // });
+
+  // it("Get patient data", async () => {
+  //   const rawData = await Patient.methods.getPatientData().call({
+  //     from: accounts[1],
+  //     gas: "1000000",
+  //   });
+
+  //   const newData = {};
+  //   for (const key in rawData) {
+  //     if (key.length > 1) {
+  //       newData[key] = rawData[key];
+  //     }
+  //   }
+  //   console.log(newData);
+  //   assert.ok(rawData);
+  // });
+
+  // it("Update patient data", async () => {
+  //   await Patient.methods
+  //     .updatePatientData(
+  //       "Aghna Faiz Ruzain",
+  //       25,
+  //       "18-06-1997",
+  //       "31 Oktober 2022 01.52.26 WIB",
+  //       `${date} ${time}`,
+  //       "anamnesis",
+  //       "diagnosis"
+  //     )
+  //     .send({
+  //       from: accounts[1],
+  //       gas: "1000000",
+  //     })
+  //     .on("transactionHash", (hash) => {
+  //       assert.ok(hash);
+  //     });
+  // });
 });
 
 // "Aghna Faiz Ruzain", 25, "18-06-1997", "01-01-2022", "amnesis", "diagnosis"
