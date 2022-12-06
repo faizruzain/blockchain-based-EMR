@@ -13,7 +13,7 @@ contract ContractDeployer {
     constructor() {
         admin = msg.sender;
 
-        address patient = address(new Patient(msg.sender));
+        address patient = address(new MedicalRecords(msg.sender));
         bunchOfContractAddress["secret"].push(ContractAddress("patient", patient));
 
         address patientVerificator = address(new PatientVerificator(msg.sender));
@@ -33,12 +33,13 @@ contract ContractDeployer {
     }
 }
 
-contract Patient {
+contract MedicalRecords {
     struct IdentitasPasien {
         address patientAddress;
         string nama_lengkap;
         uint umur;
         string tanggal_lahir;
+        string gender;
     }
 
     struct RawatJalan {
@@ -127,6 +128,7 @@ contract Patient {
         identitasPasien.nama_lengkap =  _identitasPasien.nama_lengkap;
         identitasPasien.umur =  _identitasPasien.umur;
         identitasPasien.tanggal_lahir =  _identitasPasien.tanggal_lahir;
+        identitasPasien.gender =  _identitasPasien.gender;
 
         patientId[_identitasPasien.patientAddress] = identitasPasien;
 
@@ -154,6 +156,7 @@ contract Patient {
         identitasPasien.nama_lengkap =  _identitasPasien.nama_lengkap;
         identitasPasien.umur =  _identitasPasien.umur;
         identitasPasien.tanggal_lahir =  _identitasPasien.tanggal_lahir;
+        identitasPasien.gender =  _identitasPasien.gender;
 
         patientId[_identitasPasien.patientAddress] = identitasPasien;
 
@@ -228,7 +231,6 @@ contract Patient {
         require(doctor_verificator.verify(msg.sender) || patient_verificator.verify(msg.sender));
         _;
     }
-
 }
 
 contract PatientVerificator {
@@ -245,8 +247,7 @@ contract PatientVerificator {
     function addPatient(address _address) public {
         require(!patient[_address]);      
         patient[_address] = true;
-        patients.push(_address);
-        
+        patients.push(_address);        
     }
 
     function verify(address _address) public view returns(bool _bool) {
@@ -255,7 +256,6 @@ contract PatientVerificator {
         } else {
             return false;
         }
-
     }
 
     function getAllPatients() onlyAdmin public view returns(address[] memory _address) {
@@ -282,8 +282,7 @@ contract DoctorVerificator {
     function addDoctor(address _address) onlyAdmin public {
         require(!doctor[_address]);      
         doctor[_address] = true;
-        doctors.push(_address);
-        
+        doctors.push(_address);      
     }
 
     function verify(address _address) public view returns(bool _bool) {
@@ -292,7 +291,6 @@ contract DoctorVerificator {
         } else {
             return false;
         }
-
     }
 
     function getAllDoctors() onlyAdmin public view returns(address[] memory _address) {
@@ -332,6 +330,4 @@ contract DoctorRelation {
         require(doctor_verificator.verify(_doctor));
         _;
     }
-
-
 }
